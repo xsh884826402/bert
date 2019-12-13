@@ -96,6 +96,11 @@ class TrainingInstance(object):
 def write_instance_to_example_files(instances, tokenizer, max_seq_length,
                                     max_predictions_per_seq, output_files):
   """Create TF example files from `TrainingInstance`s."""
+  """ 
+      instances对应着document
+      input_mask :0表示masked，1表示不masked
+      segement_ids：0表示前一句，1表示后一句
+  """
   writers = []
   for output_file in output_files:
     writers.append(tf.python_io.TFRecordWriter(output_file))
@@ -180,6 +185,9 @@ def create_training_instances(input_files, tokenizer, max_seq_length,
                               dupe_factor, short_seq_prob, masked_lm_prob,
                               max_predictions_per_seq, rng):
   """Create `TrainingInstance`s from raw text."""
+  """
+      instances 对应着一片document，instance 对应着一行。
+  """
   all_documents = [[]]
 
   # Input file format:
@@ -349,9 +357,20 @@ MaskedLmInstance = collections.namedtuple("MaskedLmInstance",
 
 def create_masked_lm_predictions(tokens, masked_lm_prob,
                                  max_predictions_per_seq, vocab_words, rng):
-  """Creates the predictions for the masked LM objective."""
-
+  """
+  Creates the predictions for the masked LM objective
+  :param tokens: 词
+  :param masked_lm_prob: mask的概率
+  :param max_predictions_per_seq: 硬指标，每个序列最大预测多少，也就是最多mask多少
+  :param vocab_words: 整个词汇表
+  :param rng:
+  :return: mask之后的token 序列，哪个位置被mask'，原本的词是什么
+  """
   cand_indexes = []
+
+  """ 获取candandite 索引，将所有token处理成candadite
+      em: candandite = [[2],[5,6],[7,8,9]]
+  """
   for (i, token) in enumerate(tokens):
     if token == "[CLS]" or token == "[SEP]":
       continue
@@ -379,6 +398,9 @@ def create_masked_lm_predictions(tokens, masked_lm_prob,
 
   masked_lms = []
   covered_indexes = set()
+  """
+      每个index_set集合中有token被预测的，就跳过这个集合
+  """
   for index_set in cand_indexes:
     if len(masked_lms) >= num_to_predict:
       break
