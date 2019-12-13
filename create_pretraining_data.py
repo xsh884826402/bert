@@ -224,6 +224,13 @@ def create_instances_from_document(
     all_documents, document_index, max_seq_length, short_seq_prob,
     masked_lm_prob, max_predictions_per_seq, vocab_words, rng):
   """Creates `TrainingInstance`s for a single document."""
+  """ 遍历文档中的所有序列，以short_seq_prob概率保持短序列"""
+  """ 当current_length（序列长度）达到tartget数值时，开始处理"""
+  """ 0.5的概率生成非本文档中的下一句，并退回chunk中的序列"""
+  """
+      0.5的概率使用 本文档中chunk中剩下的
+      
+  """
   document = all_documents[document_index]
 
   # Account for [CLS], [SEP], [SEP]
@@ -303,6 +310,7 @@ def create_instances_from_document(
 
         tokens = []
         segment_ids = []
+
         tokens.append("[CLS]")
         segment_ids.append(0)
         for token in tokens_a:
