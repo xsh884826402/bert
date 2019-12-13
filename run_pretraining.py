@@ -136,11 +136,24 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
         token_type_ids=segment_ids,
         use_one_hot_embeddings=use_one_hot_embeddings)
 
+
+    '''
+        n大约是整个序列的15%
+        mask_lm_loss: [batch,1]
+        masked_lm_example_loss:[batch,n,1]
+        mask_lm_log_prob: [batch,n,vocabulary_size
+    '''
     (masked_lm_loss,
      masked_lm_example_loss, masked_lm_log_probs) = get_masked_lm_output(
          bert_config, model.get_sequence_output(), model.get_embedding_table(),
          masked_lm_positions, masked_lm_ids, masked_lm_weights)
 
+
+    '''
+        next_sentence:均值 [batch]
+        next_sentence_example_loss :sum [batch]
+        next_log_probs:[batch,2]
+    '''
     (next_sentence_loss, next_sentence_example_loss,
      next_sentence_log_probs) = get_next_sentence_output(
          bert_config, model.get_pooled_output(), next_sentence_labels)
