@@ -1,5 +1,6 @@
-export BERT_BASE_DIR=/bert_model/cased_L-12_H-768_A-12
-export SQUAD_DIR=/squad2_data
+export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+export SQUAD_DIR=~/User/xsh/squad2_data
+export OUTPUT_DIR=~/User/xsh/Mode
 
 python run_squad.py --vocab_file=$BERT_BASE_DIR/vocab.txt --bert_config_file=$BERT_BASE_DIR/bert_config.json --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt --do_train=True --train_file=$SQUAD_DIR/train-v2.0.json \
 --do_predict=True \
@@ -9,6 +10,21 @@ python run_squad.py --vocab_file=$BERT_BASE_DIR/vocab.txt --bert_config_file=$BE
 --num_train_epochs=1.0 \
 --max_seq_length=384 \
 --doc_stride=128 \
---output_dir=/squad2-model/ \
+--output_dir=$OUTPUT_DIR/squad2-model/ \
 --version_2_with_negative=True \
---do_lower_case=False
+--do_lower_case=True
+
+python run_squad.py \
+--vocab_file=$BERT_BASE_DIR/vocab.txt \
+--train_batch_size=24 \
+--bert_config_file=$BERT_BASE_DIR/bert_config.json \
+--init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+--do_train=True \
+--train_file=$SQUAD_DIR/train-v1.1.json \
+--do_predict=True \
+--predict_file=$SQUAD_DIR/dev-v1.1.json \
+--learning_rate=3e-5 \
+--doc_stride=128 \
+--output_dir=$OUTPUT_DIR/squad1
+
+
