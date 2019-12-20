@@ -1,4 +1,33 @@
+
 2019年12月14日实验1：
+    使用Large模型，squad1进行实验
+    超参数：
+        export BERT_BASE_DIR=~/User/xsh/bert_model/wwm_uncased_L-24_H-1024_A-16
+        CUDA_VISIBLE_DEVICES=1 python run_squad.py --vocab_file=$BERT_BASE_DIR/vocab.txt --train_batch_size=8 --bert_config_file=$BERT_BASE_DIR/bert_config.json --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt --do_train=True --train_file=$SQUAD_DIR/train-v1.1.json --do_predict=True --predict_file=$SQUAD_DIR/dev-v1.1.json --learning_rate=3e-5 --max_seq_length=128 --doc_stride=128 --output_dir=$OUTPUT_DIR/squad1/wwm_uncased/
+    实验结果：
+        {"exact_match": 84.45600756859035, "f1": 91.14330997009772}
+
+2019年12月14日实验2：
+    使用base模型，squad1进行实验
+    超参数：
+
+            CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+            --vocab_file=$BERT_BASE_DIR/vocab.txt \
+            --train_batch_size=8 \
+            --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+            --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+            --do_train=True \
+            --train_file=$SQUAD_DIR/train-v1.1.json \
+            --do_predict=True \
+            --predict_file=$SQUAD_DIR/dev-v1.1.json \
+            --learning_rate=3e-5 \
+            --max_seq_length=128 \
+            --doc_stride=128 \
+            --output_dir=$OUTPUT_DIR/squad1/uncased/
+    实验结果：
+            {"exact_match": 79.62157048249763, "f1": 87.07304907768032}
+
+2019年12月14日实验3：
  可以看出使用base模型，squad2进行训练进行训练
  超参数：python run_squad.py --vocab_file=$BERT_BASE_DIR/vocab.txt --bert_config_file=$BERT_BASE_DIR/bert_config.json --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt --do_train=True --train_file=$SQUAD_DIR/train-v2.0.json --do_predict=True --predict_file=$SQUAD_DIR/dev-v2.0.json --train_batch_size=8 --learning_rate=3e-5 --num_train_epochs=3 --max_seq_length=128 --doc_stride=128 --output_dir=$OUTPUT_DIR/squad2-model/uncased_bert_base/ --version_2_with_negative=True --do_lower_case=True
  实验结果： {    "exact": 71.49835761812515,
@@ -12,16 +41,188 @@
                   "NoAns_total": 5945
               }
 
-2019年12月14日实验2：
-    使用  模型，squad1进行实验
-    超参数：
-    实验结果：
-2019年12月14日实验3：
-    使用 模型，squad2进行实验
-    超参数：
-    实验结果：
 2019年12月14日实验4：
-    使用 模型，squad2 进行实验
+    使用Large模型，squad2 进行实验
     超参数：
+            CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+            --vocab_file=$BERT_BASE_DIR/vocab.txt \
+            --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+            --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+            --do_train=True \
+            --train_file=$SQUAD_DIR/train-v2.0.json \
+            --do_predict=True \
+            --predict_file=$SQUAD_DIR/dev-v2.0.json \
+            --train_batch_size=8 \
+            --learning_rate=3e-5 \
+            --num_train_epochs=3 \
+            --max_seq_length=128 \
+            --doc_stride=128 \
+            --output_dir=$OUTPUT_DIR/squad2-model/wwm_uncased_bert/ \
+            --version_2_with_negative=True \
+            --do_lower_case=True
     实验结果：
-    
+            {
+                  "exact": 79.05331424239871,
+                  "f1": 81.6839735939401,
+                  "total": 11873,
+                  "HasAns_exact": 73.85290148448043,
+                  "HasAns_f1": 79.12176425115562,
+                  "HasAns_total": 5928,
+                  "NoAns_exact": 84.23885618166527,
+                  "NoAns_f1": 84.23885618166527,
+                  "NoAns_total": 5945
+           }
+
+
+-----------------------------------------------------2019-12-20日实验-----------------------------------
+探究新的分词方法，是否能对效果进行提升
+实验一：
+    使用base模型，squad1进行实验，使用bpe，并改变了WordPiece，
+    新分词方法：
+        ep: subsequence -> [subsequence,sub,sequence]
+
+    超参数：
+        使用改进的tokenization。
+        export SQUAD_DIR=~/User/xsh/squad1_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_bpe/
+    实验结果：
+        {"exact_match": 78.9120151371807, "f1": 86.59188503936116}
+
+实验二：
+    使用base模型，squad1进行实验，
+    WordPiece 分词，不返回原来的词
+     ep： subsequence -> [sub,sequence]
+    超参数：
+        252那台机器squ
+        export SQUAD_DIR=~/User/xsh/squad1_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1220/
+    实验结果：
+        {"exact_match": 79.13907284768212, "f1": 86.60972084522086}
+实验三：
+    使用base模型，squad1进行实验
+    超参数：
+        不对bert进行改动
+        export SQUAD_DIR=~/User/xsh/squad1_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1220/
+    实验结果：
+        {"exact_match": 79.51750236518448, "f1": 87.0505424483646}
+分析发现 subsequence->[sub,sequence] 比[subsequence,sub,sequence]表现要好
+-------------通过实验探究不同sequence的效果--------------------------
+"""
+实验四：
+    使用base模型，squad1data进行实验
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad1_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=192 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1220_1/
+    实验结果：
+实验五：
+    使用base模型，squad1data进行实验
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad1_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=256 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1220_v2/
+    实验结果：
+实验六：
+    使用base模型，squad1data进行实验
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad1_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=320 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1220_3/
+    实验结果：
+
+
+
+
+"""
+总结：
+    应用bpe算法之后效果下降的原因，可能是以下几点：
+    a.应用bpe算法之后vocab改动量不大，需要进行下一步的分析。bpe压缩的程度不同，使用10000，还是5000.
+    b.fine_tune的训练比较少
+    c.sequence_length的长度不够长，分别实验128,192,256,320
+    d.不同任务会不会表现不同
+    优先分析任务b，任务c。
