@@ -414,7 +414,8 @@ class WordpieceTokenizerXSH(object):
     except:
       is_return = False
     if is_return:
-      return [text] + output_tokens
+      # return [text] + output_tokens
+      return output_tokens
     output_tokens = []
     for token in whitespace_tokenize(text):
       chars = list(token)
