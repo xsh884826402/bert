@@ -491,6 +491,8 @@ num_operation越高，对原始vocab的影响越小
         --output_dir=$OUTPUT_DIR/squad1/uncased_1222_0/ \
         --num_train_epochs=6
     实验结果：
+    {"exact_match": 78.73226111636707, "f1": 86.60328673122191}
+
 实验二：
     使用epochs = 9
     超参数：
@@ -509,7 +511,7 @@ num_operation越高，对原始vocab的影响越小
         --output_dir=$OUTPUT_DIR/squad1/uncased_1222_1/ \
         --num_train_epochs=9
     实验结果：
-
+    {"exact_match": 77.59697256385998, "f1": 85.74962105915876}
 实验三：
     使用epochs = 12
     超参数：
@@ -528,7 +530,137 @@ num_operation越高，对原始vocab的影响越小
         --output_dir=$OUTPUT_DIR/squad1/uncased_1222_2/ \
         --num_train_epochs=12
     实验结果：
-        
+        {"exact_match": 76.86849574266793, "f1": 85.21881759307661}
+总结 可以看出：
+        随着模型的进一步训练，效果越来越差
+-------------------------------------------------------------------------------------------------
+探究不同的bpe_vocab size 对实验结果的影响（未经过lower）
+实验一：
+     252那台机器
+     应用bpe算法时候未经lower；使用bert推荐的sequence=384；，使用bpe_vocab=5000
+     超参数：
+        export SQUAD_DIR=~/User/xsh/squad1_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=384 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1222_0/ \
+        --num_train_epochs=6
+     实验结果：
+实验二:
+     未经lower，使用boe——vocab = 30000
+     超参数：
+        CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=384 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1222_1/ \
+        --num_train_epochs=6
+     实验结果：
+------------------------------------------------------------------
+探究不同的bpe-vocab 对实验结果的影响（应用bpe算法时对语料进行小写处理）
+163那台机器
+实验一：
+    bpe经过lower；使用vocab——size = 5000
+    超参数：
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=320 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1222_0/ \
+        --num_train_epochs=6
+    实验结果：
+实验二：
+    使用lower，vocab_size 30000
+    超参数：
+        CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=320 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1222_1/ \
+        --num_train_epochs=6
+    实验结果：
+
+-----------------------------------------------------------------
+探究两种不同的tokenizationXSH对实验结果的影响
+实验一：
+    使用5000的bpe_vocab，利用AB->[A,B]
+    超参数：
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=320 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1222_0/ \
+        --num_train_epochs=6
+    实验结果：
+
+实验二：
+    使用5000的bpe_vocab,利用AB->[AB,A,B]
+    超参数：
+        CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=320 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1222_1/ \
+        --num_train_epochs=6
+    实验结果：
+
+
+
+
+
+
+
 
 
 
