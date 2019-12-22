@@ -108,7 +108,7 @@
 
 实验二：
     使用base模型，squad1进行实验，
-    WordPiece 分词，不返回原来的词
+    WordPiece 分词，不返回原来的词,bpe_vocab_10000
      ep： subsequence -> [sub,sequence]
     超参数：
         252那台机器squ
@@ -259,28 +259,6 @@
         --num_train_epochs=5
     实验结果：
         {"exact_match": 78.6565752128666, "f1": 86.45842006868949}
-实验二：
-    使用base模型，squad1data进行实验
-    超参数：
-        export SQUAD_DIR=~/User/xsh/squad1_data
-        export OUTPUT_DIR=~/User/xsh/Model
-        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
-        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
-        --vocab_file=$BERT_BASE_DIR/vocab.txt \
-        --train_batch_size=8 \
-        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
-        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
-        --do_train=True \
-        --train_file=$SQUAD_DIR/train-v1.1.json \
-        --do_predict=True \
-        --predict_file=$SQUAD_DIR/dev-v1.1.json \
-        --learning_rate=3e-5 \
-        --max_seq_length=128 \
-        --doc_stride=128 \
-        --output_dir=$OUTPUT_DIR/squad1/uncased_1221_2/ \
-        --num_train_epochs=9
-    实验结果：
-
 实验三：
     使用base模型，squad1data进行实验
     超参数：
@@ -304,9 +282,37 @@
     实验结果：
         {"exact_match": 78.38221381267739, "f1": 86.30651173974478}
 
+实验二：
+    使用base模型，squad1data进行实验
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad1_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1221_2/ \
+        --num_train_epochs=9
+    实验结果：
+        {"exact_match": 77.32261116367077, "f1": 85.60257092352501}
+总结：可以看出随着num_train_epoch的增长，整个效果是越来越差的。
+
+
 
 ---------------------------通过实验探究不同bpe_vocab对实验结果的影响-----------------------------
 num_operation越高，对原始vocab的影响越小
+10000 bpe_vocab
+"exact_match": 79.13907284768212, "f1": 86.60972084522086}
+（这个实验的第二次结果：可能做得有问题）
 实验四：
 
     使用base模型 squad1,bpe_vocab_5000 operation
@@ -329,6 +335,11 @@ num_operation越高，对原始vocab的影响越小
         --output_dir=$OUTPUT_DIR/squad1/uncased_1221_0/ \
         --num_train_epochs=3
     实验结果：
+        {"exact_match": 78.92147587511826, "f1": 86.47749841048096}
+
+        {"exact_match": 79.29044465468307, "f1": 86.63610510042001}
+
+        {"exact_match": 79.62157048249763, "f1": 86.88354086781754}
 实验五：
     使用30000 的boe_vocab
     超参数：
@@ -350,6 +361,12 @@ num_operation越高，对原始vocab的影响越小
         --output_dir=$OUTPUT_DIR/squad1/uncased_1221_1/ \
         --num_train_epochs=3
     实验结果：
+        {"exact_match": 78.86471144749291, "f1": 86.54765800618797}
+
+        {"exact_match": 79.64049195837275, "f1": 87.06810481463847}
+
+        {"exact_match": 79.3755912961211, "f1": 87.08034204440443}
+
 实验六：
     使用50000 的boe_vocab
     超参数：
@@ -370,8 +387,85 @@ num_operation越高，对原始vocab的影响越小
         --doc_stride=128 \
         --output_dir=$OUTPUT_DIR/squad1/uncased_1221_2/ \
         --num_train_epochs=3
+        在252那台上用第一块卡uncased_1221_1
     实验结果：
+        {"exact_match": 79.28098391674551, "f1": 86.78405224049017}
 
+        {"exact_match": 79.56480605487228, "f1": 86.81720379046396}
+
+        {"exact_match": 78.9593188268685, "f1": 86.50844912353614}
+
+
+-----------------------------------------------2019年12月22日实验-------------------------------------------
+-------------------------------使用bpe__vocab__50000,探究不同的sequence长度对实验结果的影响-----------------------------------------
+实验七：
+    使用50000 的bpe_vocab，sequence192
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad1_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=192 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1221_3/ \
+        --num_train_epochs=3
+    实验结果：
+        {"exact_match": 80.71901608325449, "f1": 88.09375792835857}
+
+实验八：
+
+    使用50000 的bpe_vocab，sequence256
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad1_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=256 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1221_4/ \
+        --num_train_epochs=3
+    实验结果：
+        {"exact_match": 80.74739829706716, "f1": 88.45606871337031}
+实验九：
+    使用50000 的bpe_vocab，sequence320
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad1_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=2 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=320 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1221_5/ \
+        --num_train_epochs=3
+    实验结果：
+        {"exact_match": 80.89877010406812, "f1": 88.43355830701755}
 
 
 
