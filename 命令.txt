@@ -1,0 +1,57 @@
+export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+export BERT_BASE_DIR=~/User/xsh/bert_model/wwm_uncased_L-24_H-1024_A-16
+
+-------------------------------------------------------------------------------
+
+export SQUAD_DIR=~/User/xsh/squad1_data
+export OUTPUT_DIR=~/User/xsh/Model
+
+---------------------------------Squad1-------------------------------------------
+
+CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1220/
+
+
+----------------------------------Squad2-----------------------------------------
+CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+            --vocab_file=$BERT_BASE_DIR/vocab.txt \
+            --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+            --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+            --do_train=True \
+            --train_file=$SQUAD_DIR/train-v2.0.json \
+            --do_predict=True \
+            --predict_file=$SQUAD_DIR/dev-v2.0.json \
+            --train_batch_size=8 \
+            --learning_rate=3e-5 \
+            --num_train_epochs=3 \
+            --max_seq_length=128 \
+            --doc_stride=128 \
+            --output_dir=$OUTPUT_DIR/squad2-model/wwm_uncased_bert/ \
+            --version_2_with_negative=True \
+            --do_lower_case=True
+python evaluate1.py input predict.json
+超参数参考：
+      System 	Seq Length 	Max Batch Size
+        BERT-Base 	64 	    64
+            ... 	128 	32
+            ... 	256 	16
+            ... 	320 	14
+            ... 	384 	12
+            ... 	512 	6
+        BERT-Large 	64 	12
+            ... 	128 	6
+            ... 	256 	2
+            ... 	320 	1
+            ... 	384 	0
+            ... 	512 	0
