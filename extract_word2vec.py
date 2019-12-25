@@ -412,7 +412,7 @@ def main(_):
         features["layers"] = all_layers
         all_features.append(features)
         print('embedding table *'*10)
-        print(type(result['embedding table'].eval()))
+        print(type(result['embedding_table']))
       output_json["features"] = all_features
       writer.write(json.dumps(output_json) + "\n")
 
