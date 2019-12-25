@@ -192,7 +192,7 @@ def model_fn_builder(bert_config, init_checkpoint, layer_indexes, use_tpu,
                       init_string)
 
     all_layers = model.get_all_encoder_layers()
-    embedding_table = model.get_embedding_table()
+    embedding_table = model.get_embedding_output()
     print('debugging ',"*"*10,'\n')
     print(type(all_layers[0]),type(embedding_table))
     predictions = {
