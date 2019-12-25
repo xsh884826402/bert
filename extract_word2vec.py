@@ -194,7 +194,7 @@ def model_fn_builder(bert_config, init_checkpoint, layer_indexes, use_tpu,
     all_layers = model.get_all_encoder_layers()
     embedding_table = model.get_embedding_table()
     print('debugging ',"*"*10,'\n')
-    print(type(all_layers),type(embedding_table))
+    print(type(all_layers[0]),type(embedding_table))
     predictions = {
         "unique_id": unique_ids,
     }
