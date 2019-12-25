@@ -201,7 +201,6 @@ def model_fn_builder(bert_config, init_checkpoint, layer_indexes, use_tpu,
         print(embedding_table,type(embedding_table))
         with open('./word_embedding.txt','wb') as f:
             pickle.dump(embedding_table,f)
-
     predictions = {
         "unique_id": unique_ids,
     }
