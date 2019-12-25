@@ -342,7 +342,7 @@ def read_examples(input_file):
 
 
 def main(_):
-  tf.logging.set_verbosity(tf.logging.INFO)
+  tf.logging.set_verbosity(tf.logging.ERROR)
 
   layer_indexes = [int(x) for x in FLAGS.layers.split(",")]
 
@@ -366,6 +366,9 @@ def main(_):
   unique_id_to_feature = {}
   for feature in features:
     unique_id_to_feature[feature.unique_id] = feature
+  print("*"*15)
+  print('*'*16)
+  print('Debug',"before model_fn")
 
   model_fn = model_fn_builder(
       bert_config=bert_config,
