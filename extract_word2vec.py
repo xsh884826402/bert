@@ -22,6 +22,7 @@ import codecs
 import collections
 import json
 import re
+import pickle
 
 import modeling
 import tokenization
@@ -192,16 +193,22 @@ def model_fn_builder(bert_config, init_checkpoint, layer_indexes, use_tpu,
                       init_string)
 
     all_layers = model.get_all_encoder_layers()
-    embedding_table = model.get_embedding_output()
-    print('debugging ',"*"*10,'\n')
-    print(type(all_layers[0]),type(embedding_table))
+    embedding_table = model.get_embedding_table()
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        print('In session')
+        embedding_table = sess.run(embedding_table)
+        print(embedding_table,type(embedding_table))
+        with open('./word_embedding.txt','wb') as f:
+            pickle.dump(embedding_table,f)
+
     predictions = {
         "unique_id": unique_ids,
     }
 
     for (i, layer_index) in enumerate(layer_indexes):
       predictions["layer_output_%d" % i] = all_layers[layer_index]
-    predictions['embedding_table'] = embedding_table
+
     output_spec = tf.contrib.tpu.TPUEstimatorSpec(
         mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)
     return output_spec
@@ -343,7 +350,7 @@ def read_examples(input_file):
 
 
 def main(_):
-  tf.logging.set_verbosity(tf.logging.ERROR)
+  tf.logging.set_verbosity(tf.logging.INFO)
 
   layer_indexes = [int(x) for x in FLAGS.layers.split(",")]
 
@@ -367,9 +374,6 @@ def main(_):
   unique_id_to_feature = {}
   for feature in features:
     unique_id_to_feature[feature.unique_id] = feature
-  print("*"*15)
-  print('*'*16)
-  print('Debug',"before model_fn")
 
   model_fn = model_fn_builder(
       bert_config=bert_config,
@@ -377,7 +381,7 @@ def main(_):
       layer_indexes=layer_indexes,
       use_tpu=FLAGS.use_tpu,
       use_one_hot_embeddings=FLAGS.use_one_hot_embeddings)
-  print('Debugging','After build model_fn'*10)
+
   # If TPU is not available, this will fall back to normal Estimator on CPU
   # or GPU.
   estimator = tf.contrib.tpu.TPUEstimator(
@@ -388,7 +392,7 @@ def main(_):
 
   input_fn = input_fn_builder(
       features=features, seq_length=FLAGS.max_seq_length)
-  print('Debugging','before predict'*10)
+
   with codecs.getwriter("utf-8")(tf.gfile.Open(FLAGS.output_file,
                                                "w")) as writer:
     for result in estimator.predict(input_fn, yield_single_examples=True):
@@ -411,8 +415,6 @@ def main(_):
         features["token"] = token
         features["layers"] = all_layers
         all_features.append(features)
-        print('embedding table *'*10)
-        print(type(result['embedding_table']))
       output_json["features"] = all_features
       writer.write(json.dumps(output_json) + "\n")
 
