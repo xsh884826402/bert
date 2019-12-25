@@ -192,6 +192,7 @@ def model_fn_builder(bert_config, init_checkpoint, layer_indexes, use_tpu,
                       init_string)
 
     all_layers = model.get_all_encoder_layers()
+    embedding_table = model.get_embedding_table()
 
     predictions = {
         "unique_id": unique_ids,
@@ -199,7 +200,7 @@ def model_fn_builder(bert_config, init_checkpoint, layer_indexes, use_tpu,
 
     for (i, layer_index) in enumerate(layer_indexes):
       predictions["layer_output_%d" % i] = all_layers[layer_index]
-
+    predictions['embedding_table'] = embedding_table
     output_spec = tf.contrib.tpu.TPUEstimatorSpec(
         mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)
     return output_spec
@@ -406,6 +407,8 @@ def main(_):
         features["token"] = token
         features["layers"] = all_layers
         all_features.append(features)
+        print('embedding table *'*10)
+        print(type(result['embedding table'].eval()))
       output_json["features"] = all_features
       writer.write(json.dumps(output_json) + "\n")
 
