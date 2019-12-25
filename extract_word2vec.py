@@ -196,7 +196,8 @@ def model_fn_builder(bert_config, init_checkpoint, layer_indexes, use_tpu,
     embedding_table = model.get_embedding_table()
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        print('In session')
+        print('*'*20)
+        print('In session'*10)
         embedding_table = sess.run(embedding_table)
         print(embedding_table,type(embedding_table))
         with open('./word_embedding.txt','wb') as f:
