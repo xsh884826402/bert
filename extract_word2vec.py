@@ -373,7 +373,7 @@ def main(_):
       layer_indexes=layer_indexes,
       use_tpu=FLAGS.use_tpu,
       use_one_hot_embeddings=FLAGS.use_one_hot_embeddings)
-
+  print('Debugging','After build model_fn'*10)
   # If TPU is not available, this will fall back to normal Estimator on CPU
   # or GPU.
   estimator = tf.contrib.tpu.TPUEstimator(
@@ -384,7 +384,7 @@ def main(_):
 
   input_fn = input_fn_builder(
       features=features, seq_length=FLAGS.max_seq_length)
-
+  print('Debugging','before predict'*10)
   with codecs.getwriter("utf-8")(tf.gfile.Open(FLAGS.output_file,
                                                "w")) as writer:
     for result in estimator.predict(input_fn, yield_single_examples=True):
