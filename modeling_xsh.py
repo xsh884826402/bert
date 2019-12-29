@@ -135,7 +135,8 @@ class BertModel(object):
                input_mask=None,
                token_type_ids=None,
                use_one_hot_embeddings=False,
-               scope=None):
+               scope=None,
+               input_subword_ids=None):
     """Constructor for BertModel.
 
     Args:
@@ -177,7 +178,8 @@ class BertModel(object):
             embedding_size=config.hidden_size,
             initializer_range=config.initializer_range,
             word_embedding_name="word_embeddings",
-            use_one_hot_embeddings=use_one_hot_embeddings)
+            use_one_hot_embeddings=use_one_hot_embeddings,
+            input_subword_ids=input_subword_ids)
 
         # Add positional embeddings and token type embeddings, then layer
         # normalize and perform dropout.

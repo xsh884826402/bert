@@ -24,6 +24,7 @@ import math
 import os
 import random
 import modeling
+import modeling_xsh
 import optimization
 import tokenization
 import six
@@ -158,6 +159,10 @@ class SquadExample(object):
   """A single training/test example for simple sequence classification.
 
      For examples without an answer, the start and end position are -1.
+     star_position,
+     end_position index the right index of word
+     doc_tokens is a list of words
+
   """
 
   def __init__(self,
@@ -209,7 +214,8 @@ class InputFeatures(object):
                segment_ids,
                start_position=None,
                end_position=None,
-               is_impossible=None):
+               is_impossible=None,
+               input_subword_ids=None):
     self.unique_id = unique_id
     self.example_index = example_index
     self.doc_span_index = doc_span_index
@@ -222,10 +228,12 @@ class InputFeatures(object):
     self.start_position = start_position
     self.end_position = end_position
     self.is_impossible = is_impossible
+    self.input_subword_ids = input_subword_ids
 
 
 def read_squad_examples(input_file, is_training):
   """Read a SQuAD json file into a list of SquadExample."""
+  """One SquadEmample per (q,a) """
   with tf.gfile.Open(input_file, "r") as reader:
     input_data = json.load(reader)["data"]
 
@@ -308,7 +316,7 @@ def read_squad_examples(input_file, is_training):
 
 def convert_examples_to_features(examples, tokenizer, max_seq_length,
                                  doc_stride, max_query_length, is_training,
-                                 output_fn):
+                                 output_fn,subwords_vocab=None):
   """Loads a data file into a list of `InputBatch`s."""
 
   unique_id = 1000000000
@@ -389,6 +397,19 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
       segment_ids.append(1)
 
       input_ids = tokenizer.convert_tokens_to_ids(tokens)
+      #Modified by xsh
+      sub_word_length = 3
+      input_subword_ids = [[-1] * sub_word_length for _ in input_ids]
+      if subwords_vocab:
+          for i,word_id in enumerate(input_ids):
+              if word_id in subwords_vocab:
+                  subword_ids = subwords_vocab[word_id]
+                  if len(subword_ids)>sub_word_length:
+                      subword_ids = subword_ids[:sub_word_length]
+                  for j in range(len(subword_ids)):
+                      input_subword_ids[i][j] = subword_ids[j]
+
+
 
       # The mask has 1 for real tokens and 0 for padding tokens. Only real
       # tokens are attended to.
@@ -465,7 +486,8 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
           segment_ids=segment_ids,
           start_position=start_position,
           end_position=end_position,
-          is_impossible=example.is_impossible)
+          is_impossible=example.is_impossible,
+          input_subword_ids=input_subword_ids)
 
       # Run callback
       output_fn(feature)
@@ -548,15 +570,16 @@ def _check_is_max_context(doc_spans, cur_span_index, position):
 
 
 def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
-                 use_one_hot_embeddings):
+                 use_one_hot_embeddings,input_subword_ids):
   """Creates a classification model."""
-  model = modeling.BertModel(
+  model = modeling_xsh.BertModel(
       config=bert_config,
       is_training=is_training,
       input_ids=input_ids,
       input_mask=input_mask,
       token_type_ids=segment_ids,
-      use_one_hot_embeddings=use_one_hot_embeddings)
+      use_one_hot_embeddings=use_one_hot_embeddings,
+      input_subword_ids=input_subword_ids)
 
   final_hidden = model.get_sequence_output()
 
@@ -603,6 +626,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
     input_ids = features["input_ids"]
     input_mask = features["input_mask"]
     segment_ids = features["segment_ids"]
+    input_subword_ids = features['input_subword_ids']
 
     is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
@@ -612,7 +636,8 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
         input_ids=input_ids,
         input_mask=input_mask,
         segment_ids=segment_ids,
-        use_one_hot_embeddings=use_one_hot_embeddings)
+        use_one_hot_embeddings=use_one_hot_embeddings,
+        input_subword_ids=input_subword_ids)
 
     tvars = tf.trainable_variables()
 
@@ -620,7 +645,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
     scaffold_fn = None
     if init_checkpoint:
       (assignment_map, initialized_variable_names
-      ) = modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
+      ) = modeling_xsh.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
       if use_tpu:
 
         def tpu_scaffold():
@@ -692,6 +717,7 @@ def input_fn_builder(input_file, seq_length, is_training, drop_remainder):
       "input_ids": tf.FixedLenFeature([seq_length], tf.int64),
       "input_mask": tf.FixedLenFeature([seq_length], tf.int64),
       "segment_ids": tf.FixedLenFeature([seq_length], tf.int64),
+      "input_subword_ids":tf.FixedLenFeature([seq_length,3], tf.int64)
   }
 
   if is_training:
@@ -1078,6 +1104,7 @@ class FeatureWriter(object):
     features["input_ids"] = create_int_feature(feature.input_ids)
     features["input_mask"] = create_int_feature(feature.input_mask)
     features["segment_ids"] = create_int_feature(feature.segment_ids)
+    features["input_subword_ids"] = create_int_feature(feature.input_subword_ids)
 
     if self.is_training:
       features["start_positions"] = create_int_feature([feature.start_position])
@@ -1184,6 +1211,13 @@ def main(_):
       train_batch_size=FLAGS.train_batch_size,
       predict_batch_size=FLAGS.predict_batch_size)
 
+  ##Modified by xsh
+  subwords_vocab = {}
+  with open('./subwords_vocab.txt',encoding='utf-8') as f:
+    for line in f:
+      line = line.strip().split(":")
+      word_id = int(line[0])
+      subwords_vocab[word_id] = [int(i) for i in line[1].split()]
   if FLAGS.do_train:
     # We write to a temporary file to avoid storing very large constant tensors
     # in memory.
@@ -1197,7 +1231,8 @@ def main(_):
         doc_stride=FLAGS.doc_stride,
         max_query_length=FLAGS.max_query_length,
         is_training=True,
-        output_fn=train_writer.process_feature)
+        output_fn=train_writer.process_feature,
+        subwords_vocab=subwords_vocab)
     train_writer.close()
 
     tf.logging.info("***** Running training *****")
@@ -1234,7 +1269,8 @@ def main(_):
         doc_stride=FLAGS.doc_stride,
         max_query_length=FLAGS.max_query_length,
         is_training=False,
-        output_fn=append_feature)
+        output_fn=append_feature,
+        subwords_vocab=subwords_vocab)
     eval_writer.close()
 
     tf.logging.info("***** Running predictions *****")
@@ -1268,7 +1304,7 @@ def main(_):
 
     output_prediction_file = os.path.join(FLAGS.output_dir, "predictions.json")
     output_nbest_file = os.path.join(FLAGS.output_dir, "nbest_predictions.json")
-    output_null_log_odds_file = os.path.join(FLAGS.output_dir, "null_odds.json")
+    output_null_log_odds_file = os.path.join(FLAGS.output_dir, "null_oddsnull_odds.json")
 
     write_predictions(eval_examples, eval_features, all_results,
                       FLAGS.n_best_size, FLAGS.max_answer_length,
