@@ -971,7 +971,7 @@ def get_shape_list(tensor, expected_rank=None, name=None):
 
   if not non_static_indexes:
     return shape
-  print('In get_shape_list',non_static_indexes)
+  # print('In get_shape_list',non_static_indexes)
   dyn_shape = tf.shape(tensor)
   for index in non_static_indexes:
     shape[index] = dyn_shape[index]
