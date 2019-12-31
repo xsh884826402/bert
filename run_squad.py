@@ -397,17 +397,7 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
       segment_ids.append(1)
 
       input_ids = tokenizer.convert_tokens_to_ids(tokens)
-      #Modified by xsh
-      sub_word_length = 3
-      input_subword_ids = [[-1] * sub_word_length for _ in input_ids]
-      if subwords_vocab:
-          for i,word_id in enumerate(input_ids):
-              if word_id in subwords_vocab:
-                  subword_ids = subwords_vocab[word_id]
-                  if len(subword_ids)>sub_word_length:
-                      subword_ids = subword_ids[:sub_word_length]
-                  for j in range(len(subword_ids)):
-                      input_subword_ids[i][j] = subword_ids[j]
+
 
 
 
@@ -425,6 +415,18 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
       assert len(input_mask) == max_seq_length
       assert len(segment_ids) == max_seq_length
 
+      # Modified by xsh
+      sub_word_length = 3
+      input_subword_ids = [[-1] * sub_word_length for _ in input_ids]
+      if subwords_vocab:
+          for i, word_id in enumerate(input_ids):
+              if word_id in subwords_vocab:
+                  subword_ids = subwords_vocab[word_id]
+                  if len(subword_ids) > sub_word_length:
+                      subword_ids = subword_ids[:sub_word_length]
+                  for j in range(len(subword_ids)):
+                      input_subword_ids[i][j] = subword_ids[j]
+      assert len(input_subword_ids) == max_seq_length
       start_position = None
       end_position = None
       if is_training and not example.is_impossible:
@@ -1098,13 +1100,18 @@ class FeatureWriter(object):
       feature = tf.train.Feature(
           int64_list=tf.train.Int64List(value=list(values)))
       return feature
+    def create_int_xsh_feature(values):
+        temp_values = [i for line in values for i in line]
+        feature = tf.train.Feature(
+            int64_list=tf.train.Int64List(value=temp_values))
+        return feature
 
     features = collections.OrderedDict()
     features["unique_ids"] = create_int_feature([feature.unique_id])
     features["input_ids"] = create_int_feature(feature.input_ids)
     features["input_mask"] = create_int_feature(feature.input_mask)
     features["segment_ids"] = create_int_feature(feature.segment_ids)
-    features["input_subword_ids"] = create_int_feature(feature.input_subword_ids)
+    features["input_subword_ids"] = create_int_xsh_feature(feature.input_subword_ids)
 
     if self.is_training:
       features["start_positions"] = create_int_feature([feature.start_position])

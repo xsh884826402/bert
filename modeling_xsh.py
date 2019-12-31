@@ -429,24 +429,48 @@ def embedding_lookup(input_ids,
 
   sub_word_shape = get_shape_list(input_subword_ids)
   print('In embedding','*'*20,'\n')
-  with tf.Session() as sess:
-      print(sess.run(sub_word_shape))
+  print('flaten_input_shape',get_shape_list(flat_input_ids),flat_input_ids.shape.as_list())
+  print('Input_shape',input_shape)
+  print('SUbword_shape',sub_word_shape)
+  print('List',input_subword_ids.shape.as_list())
 
-  sub_word_bool = tf.not_equal(input_subword_ids, -1)
-  sub_word_index = tf.where(condition=sub_word_bool, x=input_subword_ids, y=tf.zeros(input_subword_ids.shape, dtype=tf.int32))
-  sub_word = tf.gather(embedding_table, sub_word_index)
-  sub_word_shape = get_shape_list(sub_word)
-  sub_word = tf.reshape(sub_word, [-1, sub_word_shape[-1]])
-  sub_word_bool = tf.reshape(sub_word_bool, [-1])
-  sub_word = tf.where(condition=sub_word_bool, x=sub_word, y=tf.zeros(sub_word.shape, dtype=tf.int32))
-  sub_word = tf.reshape(sub_word, sub_word_shape)
-  sub_word = tf.cast(sub_word, dtype=tf.float32)
+  #flaten Version
+  subword_shape = get_shape_list(input_subword_ids)
+  print('Debugging-0',subword_shape)
+  flat_input_subword_ids = tf.reshape(input_subword_ids,[-1])
+  flat_input_subword_ids_shape = get_shape_list(flat_input_subword_ids)
+  sub_word_bool = tf.not_equal(flat_input_subword_ids,-1)
+  zeros = tf.zeros(flat_input_subword_ids_shape,dtype=tf.int32)
+  sub_word_index = tf.where(condition=sub_word_bool,x=flat_input_subword_ids,y=zeros)
+  sub_word = tf.gather(embedding_table,sub_word_index)
+  print('Debugging-1',get_shape_list(sub_word))
+
+  zeros = tf.zeros(get_shape_list(sub_word), dtype=tf.float32)
+  sub_word = tf.where(condition=sub_word_bool,x=sub_word,y=zeros)
+  sub_word = tf.reshape(sub_word,subword_shape+[embedding_size])
   sub_word = tf.reduce_mean(sub_word, axis=-2)
-  with tf.Session() as sess:
-      print(sess.run([tf.shape(output),tf.shape(sub_word)]))
+  print('Debugging-2',get_shape_list(output),get_shape_list(sub_word))
+  # assert('a'=='b')
+
+  # sub_word_bool = tf.not_equal(input_subword_ids, -1)
+  # print('debugging')
+  # print('subword_bool_shape',sub_word_bool.shape.as_list())
+  # sub_word_index = tf.where(condition=sub_word_bool, x=input_subword_ids, y=tf.zeros(input_subword_ids.shape, dtype=tf.int32))
+  # sub_word = tf.gather(embedding_table, sub_word_index)
+  # sub_word_shape = get_shape_list(sub_word)
+  # sub_word = tf.reshape(sub_word, [-1, sub_word_shape[-1]])
+  # sub_word_bool = tf.reshape(sub_word_bool, [-1])
+  # sub_word = tf.where(condition=sub_word_bool, x=sub_word, y=tf.zeros(sub_word.shape, dtype=tf.int32))
+  # sub_word = tf.reshape(sub_word, sub_word_shape)
+  # sub_word = tf.cast(sub_word, dtype=tf.float32)
+  # sub_word = tf.reduce_mean(sub_word, axis=-2)
+  # with tf.Session() as sess:
+  #     print(sess.run([tf.shape(output),tf.shape(sub_word)]))
   #Add code by xsh
   #word_embedding = word_embedding + subword_embedding
   output +=sub_word
+  print('output_shape', output.shape.as_list())
+  # assert('a'=='b')
   return (output, embedding_table)
 
 
@@ -947,7 +971,7 @@ def get_shape_list(tensor, expected_rank=None, name=None):
 
   if not non_static_indexes:
     return shape
-
+  print('In get_shape_list',non_static_indexes)
   dyn_shape = tf.shape(tensor)
   for index in non_static_indexes:
     shape[index] = dyn_shape[index]
