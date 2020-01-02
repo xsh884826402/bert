@@ -1,6 +1,6 @@
 export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
 export BERT_BASE_DIR=~/User/xsh/bert_model/wwm_uncased_L-24_H-1024_A-16
-
+export BERT_BASE_DIR=~/User/xsh/bert_model/xsh/
 -------------------------------------------------------------------------------
 
 export SQUAD_DIR=~/User/xsh/squad1_data
@@ -46,7 +46,8 @@ CUDA_VISIBLE_DEVICES=1 python run_squad.py \
 python evaluate1.py /home/ubuntu/User/xsh/squad1_data/dev-v1.1.json /home/ubuntu/User/xsh/Model/squad1/uncased_1221_3/predictions.json
 nohup sh run_bert_1221_2.sh > nohup_2.txt 2>&1 &
 
-
+--------------------------------------------评估squad2------------------------------------
+python evaluate2.py /home/ubuntu/User/xsh/squad2_data/dev-v2.0.json /home/ubuntu/User/xsh/Model/squad2-model/uncased_11_0/predictions.json
 
 
 --------------------------------------------bpe算法命令-------------------------------------

@@ -583,8 +583,16 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
       use_one_hot_embeddings=use_one_hot_embeddings,
       input_subword_ids=input_subword_ids)
 
-  final_hidden = model.get_sequence_output()
 
+  # model = modeling.BertModel(
+  #     config=bert_config,
+  #     is_training=is_training,
+  #     input_ids=input_ids,
+  #     input_mask=input_mask,
+  #     token_type_ids=segment_ids,
+  #     use_one_hot_embeddings=use_one_hot_embeddings)
+
+  final_hidden = model.get_sequence_output()
   final_hidden_shape = modeling.get_shape_list(final_hidden, expected_rank=3)
   batch_size = final_hidden_shape[0]
   seq_length = final_hidden_shape[1]
@@ -647,7 +655,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
     scaffold_fn = None
     if init_checkpoint:
       (assignment_map, initialized_variable_names
-      ) = modeling_xsh.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
+      ) = modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
       if use_tpu:
 
         def tpu_scaffold():
@@ -1320,6 +1328,8 @@ def main(_):
 
 
 if __name__ == "__main__":
+  print('hahahah','*'*20)
+  print('hahaha')
   flags.mark_flag_as_required("vocab_file")
   flags.mark_flag_as_required("bert_config_file")
   flags.mark_flag_as_required("output_dir")

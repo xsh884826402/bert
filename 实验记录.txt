@@ -557,6 +557,7 @@ num_operation越高，对原始vocab的影响越小
         --output_dir=$OUTPUT_DIR/squad1/uncased_1222_0/ \
         --num_train_epochs=6
      实验结果：
+        75.48 84.47
 实验二:
      未经lower，使用boe——vocab = 30000
      超参数：
@@ -575,6 +576,8 @@ num_operation越高，对原始vocab的影响越小
         --output_dir=$OUTPUT_DIR/squad1/uncased_1222_1/ \
         --num_train_epochs=6
      实验结果：
+        78.74 87.09
+     bpe——vocab 30000 的效果更好
 ------------------------------------------------------------------
 探究不同的bpe-vocab 对实验结果的影响（应用bpe算法时对语料进行小写处理）
 163那台机器
@@ -596,6 +599,7 @@ num_operation越高，对原始vocab的影响越小
         --output_dir=$OUTPUT_DIR/squad1/uncased_1222_0/ \
         --num_train_epochs=6
     实验结果：
+    73.96 83.25
 实验二：
     使用lower，vocab_size 30000
     超参数：
@@ -614,7 +618,8 @@ num_operation越高，对原始vocab的影响越小
         --output_dir=$OUTPUT_DIR/squad1/uncased_1222_1/ \
         --num_train_epochs=6
     实验结果：
-
+        78.30 86.59
+    未经lower的处理更好
 -----------------------------------------------------------------
 探究两种不同的tokenizationXSH对实验结果的影响
 实验一：
@@ -654,6 +659,596 @@ num_operation越高，对原始vocab的影响越小
         --output_dir=$OUTPUT_DIR/squad1/uncased_1222_1/ \
         --num_train_epochs=6
     实验结果：
+
+-------------------------------------12-31日通过实验探究引入子词信息是否能提高实验效果---------------
+实验一：
+    使用原始的bert模型，探究实验效果
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad1_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=320 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1231-0/ \
+        --num_train_epochs=3
+    实验结果：
+        {"exact_match": 80.74739829706716, "f1": 88.26587179069762}
+实验二：
+    引入sub_word ,探究实验效果
+    超参数：
+        CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=320 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_1231-1/ \
+        --num_train_epochs=3
+    实验结果：
+        {"exact_match": 80.37842951750237, "f1": 88.18473935156493}
+------------------------------------一月一号 补充实验-------------------------
+实验一：
+    使用原始的bert模型，跑在squad2数据集上探究实验效果
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad2_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v2.0.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v2.0.json \
+        --train_batch_size=8 \
+        --learning_rate=3e-5 \
+        --num_train_epochs=3 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad2-model/uncased_11_0/ \
+        --version_2_with_negative=True
+    实验结果：
+        {
+          "exact": 71.23726101238103,
+          "f1": 74.03737831744361,
+          "total": 11873,
+          "HasAns_exact": 67.20647773279352,
+          "HasAns_f1": 72.81474236892822,
+          "HasAns_total": 5928,
+          "NoAns_exact": 75.2565180824222,
+          "NoAns_f1": 75.2565180824222,
+          "NoAns_total": 5945
+        }
+
+
+实验二：
+    引入sub_word ,探究实验效果
+    超参数：
+        CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v2.0.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v2.0.json \
+        --train_batch_size=8 \
+        --learning_rate=3e-5 \
+        --num_train_epochs=3 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad2-model/uncased_11_1/ \
+        --version_2_with_negative=True
+    实验结果：
+        {
+          "exact": 72.87964288722311,
+          "f1": 75.82408601805253,
+          "total": 11873,
+          "HasAns_exact": 67.05465587044534,
+          "HasAns_f1": 72.95198604796494,
+          "HasAns_total": 5928,
+          "NoAns_exact": 78.68797308662742,
+          "NoAns_f1": 78.68797308662742,
+          "NoAns_total": 5945
+        }
+补充实验，确认验证实验效果
+实验三：
+    使用原始的bert模型，跑在squad2数据集上探究实验效果
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad2_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v2.0.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v2.0.json \
+        --train_batch_size=8 \
+        --learning_rate=3e-5 \
+        --num_train_epochs=3 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad2-model/uncased_11_2/ \
+        --version_2_with_negative=True
+    实验结果：
+        {
+              "exact": 72.93860018529436,
+              "f1": 75.9107797579275,
+              "total": 11873,
+              "HasAns_exact": 66.0425101214575,
+              "HasAns_f1": 71.99539272366266,
+              "HasAns_total": 5928,
+              "NoAns_exact": 79.81497056349873,
+              "NoAns_f1": 79.81497056349873,
+              "NoAns_total": 5945
+            }
+
+实验四：
+    引入subword子词信息
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad2_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v2.0.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v2.0.json \
+        --train_batch_size=8 \
+        --learning_rate=3e-5 \
+        --num_train_epochs=3 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad2-model/uncased_11_3/ \
+        --version_2_with_negative=True
+    实验结果：
+        {
+          "exact": 71.29621831045229,
+          "f1": 74.38637723913878,
+          "total": 11873,
+          "HasAns_exact": 66.16059379217273,
+          "HasAns_f1": 72.34977344134496,
+          "HasAns_total": 5928,
+          "NoAns_exact": 76.41715727502103,
+          "NoAns_f1": 76.41715727502103,
+          "NoAns_total": 5945
+        }
+实验五：
+    使用原始的bert模型，跑在squad2数据集上探究实验效果
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad2_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v2.0.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v2.0.json \
+        --train_batch_size=8 \
+        --learning_rate=3e-5 \
+        --num_train_epochs=3 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad2-model/uncased_11_4/ \
+        --version_2_with_negative=True
+    实验结果：
+                {
+          "exact": 73.12389455066116,
+          "f1": 76.06757207850616,
+          "total": 11873,
+          "HasAns_exact": 67.24021592442645,
+          "HasAns_f1": 73.13601270042227,
+          "HasAns_total": 5928,
+          "NoAns_exact": 78.99074852817493,
+          "NoAns_f1": 78.99074852817493,
+          "NoAns_total": 5945
+        }
+
+实验6：
+    引入subword，squad2上进行实验
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad2_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v2.0.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v2.0.json \
+        --train_batch_size=8 \
+        --learning_rate=3e-5 \
+        --num_train_epochs=3 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad2-model/uncased_11_5/ \
+        --version_2_with_negative=True
+    实验结果：
+                    {
+              "exact": 72.45009685841826,
+              "f1": 75.23613106213675,
+              "total": 11873,
+              "HasAns_exact": 66.8859649122807,
+              "HasAns_f1": 72.46602295896558,
+              "HasAns_total": 5928,
+              "NoAns_exact": 77.99831791421363,
+              "NoAns_f1": 77.99831791421363,
+              "NoAns_total": 5945
+            }
+
+实验七：
+    使用subword，,并观察最后是否输出print不进行init
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad2_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=2 python run_squad.py \
+        --vocab_file=/home/ubuntu/User/xsh/bert_model/xsh/vocab.txt \
+        --bert_config_file=/home/ubuntu/User/xsh/bert_model/xsh/bert_config.json \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v2.0.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v2.0.json \
+        --train_batch_size=8 \
+        --learning_rate=3e-5 \
+        --num_train_epochs=5 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad2-model/uncased_11_6/ \
+        --version_2_with_negative=True
+    实验结果：
+        {
+          "exact": 49.4904404952413,
+          "f1": 49.58718561229402,
+          "total": 11873,
+          "HasAns_exact": 0.47233468286099867,
+          "HasAns_f1": 0.6661023574168066,
+          "HasAns_total": 5928,
+          "NoAns_exact": 98.36837678721615,
+          "NoAns_f1": 98.36837678721615,
+          "NoAns_total": 5945
+        }
+实验八：
+    不使用subword，,并观察最后是否输出print不进行init
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad2_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=2 python run_squad.py \
+        --vocab_file=/home/ubuntu/User/xsh/bert_model/xsh/vocab.txt \
+        --bert_config_file=/home/ubuntu/User/xsh/bert_model/xsh/bert_config.json \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v2.0.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v2.0.json \
+        --train_batch_size=8 \
+        --learning_rate=3e-5 \
+        --num_train_epochs=5 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad2-model/uncased_11_7/ \
+        --version_2_with_negative=True
+    实验结果：
+           {
+          "exact": 49.56624273561863,
+          "f1": 49.6728567835583,
+          "total": 11873,
+          "HasAns_exact": 0.37112010796221323,
+          "HasAns_f1": 0.5846539458818583,
+          "HasAns_total": 5928,
+          "NoAns_exact": 98.62068965517241,
+          "NoAns_f1": 98.62068965517241,
+          "NoAns_total": 5945
+        }
+
+
+
+
+----------------------------------10.1.114.118那台机器-----------------------
+10.1.114.118那一台机器
+实验1:
+    引入subword信息，探究实验结果
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad1_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/xsh
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_11_0/ \
+        --num_train_epochs=5
+    实验结果：
+实验二：
+    原始的bert改进的模型，不引入subword
+    超参数：
+        CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --train_batch_size=8 \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v1.1.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v1.1.json \
+        --learning_rate=3e-5 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad1/uncased_11_1/ \
+        --num_train_epochs=5
+    实验结果：
+
+实验三：
+    原始的bert模型在squad2上的结果；机器118
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad2_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v2.0.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v2.0.json \
+        --train_batch_size=8 \
+        --learning_rate=3e-5 \
+        --num_train_epochs=3 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad2-model/uncased_11_2/ \
+        --version_2_with_negative=True
+    实验结果：
+        {
+          "exact": 72.34060473342879,
+          "f1": 75.32214031787335,
+          "total": 11873,
+          "HasAns_exact": 66.2280701754386,
+          "HasAns_f1": 72.19969163193475,
+          "HasAns_total": 5928,
+          "NoAns_exact": 78.43566021867115,
+          "NoAns_f1": 78.43566021867115,
+          "NoAns_total": 5945
+        }
+
+实验四：
+    引入subword信息，在squad2数据集上进行实验
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad2_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v2.0.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v2.0.json \
+        --train_batch_size=8 \
+        --learning_rate=3e-5 \
+        --num_train_epochs=3 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad2-model/uncased_11_3/ \
+        --version_2_with_negative=True
+    实验结果：
+        {
+          "exact": 72.99755748336563,
+          "f1": 75.87539722571249,
+          "total": 11873,
+          "HasAns_exact": 67.76315789473684,
+          "HasAns_f1": 73.52709029367121,
+          "HasAns_total": 5928,
+          "NoAns_exact": 78.2169890664424,
+          "NoAns_f1": 78.2169890664424,
+          "NoAns_total": 5945
+        }
+
+实验五：
+    使用原始的bert模型，跑在squad2数据集上探究实验效果
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad2_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v2.0.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v2.0.json \
+        --train_batch_size=8 \
+        --learning_rate=3e-5 \
+        --num_train_epochs=3 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad2-model/uncased_11_4/ \
+        --version_2_with_negative=True
+    实验结果：
+                {
+          "exact": 72.50905415648951,
+          "f1": 75.57206851115782,
+          "total": 11873,
+          "HasAns_exact": 66.86909581646424,
+          "HasAns_f1": 73.0039084738488,
+          "HasAns_total": 5928,
+          "NoAns_exact": 78.13288477712364,
+          "NoAns_f1": 78.13288477712364,
+          "NoAns_total": 5945
+        }
+
+
+
+实验6：
+    引入subword，squad2上进行实验
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad2_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v2.0.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v2.0.json \
+        --train_batch_size=8 \
+        --learning_rate=3e-5 \
+        --num_train_epochs=3 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad2-model/uncased_11_5/ \
+        --version_2_with_negative=True
+    实验结果：
+        {
+          "exact": 71.94474858923608,
+          "f1": 74.92002081694834,
+          "total": 11873,
+          "HasAns_exact": 66.56545209176788,
+          "HasAns_f1": 72.52452887308142,
+          "HasAns_total": 5928,
+          "NoAns_exact": 77.30866274179984,
+          "NoAns_f1": 77.30866274179984,
+          "NoAns_total": 5945
+        }
+-------------------------------------2020年一月2号------------------------------------
+119那台机器
+实验一：
+    使用原始的bert模型，在squad2上进行实验，换卡跑实验
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad2_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v2.0.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v2.0.json \
+        --train_batch_size=8 \
+        --learning_rate=3e-5 \
+        --num_train_epochs=3 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad2-model/uncased_12_1/ \
+        --version_2_with_negative=True
+    实验结果：
+
+实验二：
+    使用subword，在suqad2实验，与之前所用的卡不同
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad2_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v2.0.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v2.0.json \
+        --train_batch_size=8 \
+        --learning_rate=3e-5 \
+        --num_train_epochs=3 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad2-model/uncased_12_0/ \
+        --version_2_with_negative=True
+     实验结果：
+--------------------------》》》》》》》》》》》》》
+118那台机器
+实验一：
+    使用原始的bert模型，在squad2上进行实验，换卡跑实验
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad2_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=1 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v2.0.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v2.0.json \
+        --train_batch_size=8 \
+        --learning_rate=3e-5 \
+        --num_train_epochs=3 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad2-model/uncased_12_1/ \
+        --version_2_with_negative=True
+    实验结果：
+
+实验二：
+    使用subword，在suqad2实验，与之前所用的卡不同
+    超参数：
+        export SQUAD_DIR=~/User/xsh/squad2_data
+        export OUTPUT_DIR=~/User/xsh/Model
+        export BERT_BASE_DIR=~/User/xsh/bert_model/uncased_L-12_H-768_A-12
+        CUDA_VISIBLE_DEVICES=0 python run_squad.py \
+        --vocab_file=$BERT_BASE_DIR/vocab.txt \
+        --bert_config_file=$BERT_BASE_DIR/bert_config.json \
+        --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+        --do_train=True \
+        --train_file=$SQUAD_DIR/train-v2.0.json \
+        --do_predict=True \
+        --predict_file=$SQUAD_DIR/dev-v2.0.json \
+        --train_batch_size=8 \
+        --learning_rate=3e-5 \
+        --num_train_epochs=3 \
+        --max_seq_length=128 \
+        --doc_stride=128 \
+        --output_dir=$OUTPUT_DIR/squad2-model/uncased_12_0/ \
+        --version_2_with_negative=True
+     实验结果：
+
+
+
+
+
+
 
 
 
